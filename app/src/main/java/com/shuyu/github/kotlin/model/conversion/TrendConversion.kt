@@ -9,9 +9,9 @@ import java.lang.Exception
  * Date: 2018-10-29
  */
 val TAGS = hashMapOf(
-        Pair("meta", hashMapOf(Pair("start", "<span class=\"d-inline-block float-sm-right\""), Pair("end", "</span>"))),
-        Pair("starCount", hashMapOf(Pair("start", "<a class=\"muted-link d-inline-block mr-3\""), Pair("flag", "/stargazers\">"), Pair("end", "</a>"))),
-        Pair("forkCount", hashMapOf(Pair("start", "<a class=\"muted-link d-inline-block mr-3\""), Pair("flag", "/network"), Pair("end", "</a>")))
+        Pair("meta", hashMapOf(Pair("start", "<span class=\"d-inline-block float-sm-right\""), Pair("flag", "/svg>"), Pair("end", "</span>end"))),
+        Pair("starCount", hashMapOf(Pair("start", "<svg aria-label=\"star\""), Pair("flag", "/svg>"), Pair("end", "</a>"))),
+        Pair("forkCount", hashMapOf(Pair("start", "<svg aria-label=\"repo-forked\""), Pair("flag", "/svg>"), Pair("end", "</a>")))
 )
 
 object TrendConversion {
@@ -27,13 +27,13 @@ object TrendConversion {
         var splitWithH3 = responseData.split("<article")
         splitWithH3 = splitWithH3.subList(1, splitWithH3.size)
 
-        for (i in 0 until splitWithH3.size) {
+        for (element in splitWithH3) {
             val repo = TrendingRepoModel()
-            val html = splitWithH3[i]
+            val html = element
 
             parseRepoBaseInfo(repo, html)
 
-            val metaNoteContent = parseContentWithNote(html, "class=\"f6 text-gray mt-2\">", "</div>")
+            val metaNoteContent = parseContentWithNote(html, "class=\"f6 text-gray mt-2\">", "</div>") + "end"
             repo.meta = parseRepoLabelWithTag(repo, metaNoteContent, TAGS["meta"]!!)
             repo.starCount = parseRepoLabelWithTag(repo, metaNoteContent, TAGS["starCount"]!!)
             repo.forkCount = parseRepoLabelWithTag(repo, metaNoteContent, TAGS["forkCount"]!!)
@@ -83,13 +83,14 @@ object TrendConversion {
 
     private fun parseRepoLabelWithTag(repo: TrendingRepoModel, noteContent: String, tag: Map<String, String>): String {
         val startFlag = if (TAGS["starCount"] == tag || TAGS["forkCount"] == tag) {
-            tag["start"] + " href=\"/" + repo.fullName + tag["flag"]
+            //tag["start"] + " href=\"/" + repo.fullName + tag["flag"]
+            tag["start"] ?: error("")
         } else {
-            tag["start"]!!
+            tag["start"] ?: error("")
         }
-        val content = parseContentWithNote(noteContent, startFlag, tag["end"]!!)
-        return if (content.indexOf("</svg>") != -1 && (content.indexOf("</svg>") + "</svg>".length <= content.length)) {
-            val metaContent = content.substring(content.indexOf("</svg>") + "</svg>".length, content.length)
+        val content = parseContentWithNote(noteContent, startFlag, tag["end"] ?: error(""))
+        return if (content.indexOf(tag["flag"] ?: error("")) != -1 && (content.indexOf(tag["flag"] ?: error("")) + "</span>".length <= content.length)) {
+            val metaContent = content.substring(content.indexOf(tag["flag"] ?: error("")) + (tag["flag"] ?: error("")).length, content.length)
             metaContent.trim()
         } else {
             content.trim()
@@ -111,8 +112,8 @@ object TrendConversion {
         repo.contributorsUrl = splitWitSemicolon[1]
         val contributors = ArrayList<String>()
 
-        for (i in 0 until splitWitSemicolon.size) {
-            val url = splitWitSemicolon[i]
+        for (element in splitWitSemicolon) {
+            val url = element
             if (url.indexOf("http") != -1) {
                 contributors.add(url)
             }
